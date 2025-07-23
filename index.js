@@ -23,8 +23,30 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
+    const postsCollection = client.db('forundb').collection('posts');
+
+
+    app.get('/posts/search', async (req, res) => {
+  const tag = req.query.tag;
+  if (!tag) return res.status(400).json({ error: 'Tag is required' });
+
+  const searchRegex = new RegExp(tag, 'i'); // case-insensitive
+  const result = await postsCollection.find({ tags: { $in: [searchRegex] } }).toArray();
+  res.send(result);
+});
+
+// tags section 
+app.get('/tags', async (req, res) => {
+  try {
+    const tags = await client.db('forundb').collection('posts').distinct('tags');
+    res.send(tags);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: 'Failed to fetch tags' });
+  }
+});
 
 
 
@@ -32,11 +54,11 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);

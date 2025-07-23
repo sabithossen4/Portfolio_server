@@ -22,6 +22,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const postsCollection = client.db('forundb').collection('posts');
+    const usersCollection = client.db('forundb').collection('users');
 
     // ✅ Create a New Post
     app.post('/posts', async (req, res) => {
@@ -130,6 +131,79 @@ app.patch('/posts/:id/vote', async (req, res) => {
     res.status(500).send({ message: 'Failed to vote', error });
   }
 });
+
+// ✅ Save user on membership
+app.post('/users', async (req, res) => {
+  const user = req.body;
+  const query = { email: user.email };
+  const existingUser = await usersCollection.findOne(query);
+
+  if (existingUser) {
+    return res.send({ message: 'User already a member' });
+  }
+
+  const result = await usersCollection.insertOne(user);
+  res.send(result);
+});
+
+// ✅ Check if user is member
+app.get('/users/member/:email', async (req, res) => {
+  const email = req.params.email;
+  const user = await usersCollection.findOne({ email });
+  res.send({ isMember: !!user });
+});
+
+  // ✅ Save Comment
+    app.post('/posts/:id/comments', async (req, res) => {
+      const { id } = req.params;
+      const comment = req.body.comment;
+      const result = await postsCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $push: { comments: comment } }
+      );
+      res.send(result);
+    });
+
+    // ✅ Get Comments
+    app.get('/posts/:id/comments', async (req, res) => {
+      const { id } = req.params;
+      const post = await postsCollection.findOne(
+        { _id: new ObjectId(id) },
+        { projection: { comments: 1 } }
+      );
+      res.send(post?.comments || []);
+    });
+
+    app.get('/users/leaderboard', async (req, res) => {
+  const users = await usersCollection.aggregate([
+    {
+      $lookup: {
+        from: 'posts',
+        localField: 'email',
+        foreignField: 'authorEmail',
+        as: 'posts',
+      },
+    },
+    {
+      $addFields: {
+        totalPosts: { $size: '$posts' },
+      },
+    },
+    {
+      $sort: { totalPosts: -1 },
+    },
+    {
+      $project: {
+        name: 1,
+        email: 1,
+        totalPosts: 1,
+      },
+    },
+  ]).toArray();
+
+  res.send(users);
+});
+
 
 
 

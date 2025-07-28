@@ -119,7 +119,38 @@ app.patch('/posts/:id/vote', async (req, res) => {
     });
 
         // Posts with Pagination & Sorting
-
+app.get('/posts', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const sort = req.query.sort || 'newest';
+    const limit = 6;
+    const skip = (page - 1) * limit;
+    const totalCount = await postsCollection.countDocuments();
+    let posts;
+    if (sort === 'popularity') {
+      posts = await postsCollection.aggregate([
+        {
+          $addFields: {
+            voteDifference: { $subtract: ["$upVote", "$downVote"] }
+          }
+        },
+        { $sort: { voteDifference: -1 } },
+        { $skip: skip },
+        { $limit: limit }
+      ]).toArray();
+    } else {
+      posts = await postsCollection.find({})
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+    }
+    res.send({ posts, totalCount });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ error: "Failed to fetch posts" });
+  }
+});
 
 
  // Get a single post by ID
@@ -135,14 +166,7 @@ app.get('/posts/popular', async (req, res) => {
   res.send(result);
 });    
 
-app.get('/posts/leaderboard', async (req, res) => {
-  const topPosts = await postsCollection
-    .find()
-    .sort({ totalLiked: -1 }) // vote অনুসারে descending
-    .limit(10)
-    .toArray();
-  res.send(topPosts);
-});
+
     
     // Save new user (POST)
 app.post('/users', async (req, res) => {

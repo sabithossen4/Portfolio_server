@@ -77,18 +77,28 @@ async function run() {
     });   
 
 // Vote System
-
+app.patch('/posts/:id/vote', async (req, res) => {
+  const { likeChange, dislikeChange } = req.body;
+  const { id } = req.params;
+  const query = { _id: new ObjectId(id) };  
+  const post = await postsCollection.findOne(query);
+  if (!post) return res.status(404).send({ message: 'Post not found' });  
+  const updatedLikes = (post.upVote || 0) + (likeChange || 0);
+  const updatedDislikes = (post.downVote || 0) + (dislikeChange || 0);  
+  const result = await postsCollection.updateOne(
+    query, 
+    { 
+      $set: { 
+        upVote: updatedLikes,
+        downVote: updatedDislikes 
+      } 
+    }
+  );  
+  res.send(result);
+});
 
        // Save Comment
-    app.post('/posts/:id/comments', async (req, res) => {
-      const { id } = req.params;
-      const comment = req.body.comment;
-      const result = await postsCollection.updateOne(
-        { _id: new ObjectId(id) },
-        { $push: { comments: comment } }
-      );
-      res.send(result);
-    });
+    
 
     // Get Comments
     app.get('/posts/:id/comments', async (req, res) => {

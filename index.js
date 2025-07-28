@@ -166,7 +166,14 @@ app.get('/posts/popular', async (req, res) => {
   res.send(result);
 });    
 
-
+app.get('/posts/leaderboard', async (req, res) => {
+  const topPosts = await postsCollection
+    .find()
+    .sort({ totalLiked: -1 }) // vote অনুসারে descending
+    .limit(10)
+    .toArray();
+  res.send(topPosts);
+});
     
     // Save new user (POST)
 app.post('/users', async (req, res) => {

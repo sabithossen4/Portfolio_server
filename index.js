@@ -41,13 +41,16 @@ async function run() {
 });
   
 
-      
+    // Search by Tag
+    app.get('/posts/search', async (req, res) => {
+      const tag = req.query.tag;
+      if (!tag) return res.status(400).json({ error: 'Tag is required' });
+      const searchRegex = new RegExp(tag, 'i');
+      const result = await postsCollection.find({ tags: { $in: [searchRegex] } }).toArray();
+      res.send(result);
+    });    
 
-    // Featured Posts
-    app.get('/posts/featured', async (req, res) => {
-      const featuredPosts = await postsCollection.find({ featured: true }).limit(4).toArray();
-      res.send(featuredPosts);
-    });
+    
 
     // Recent Posts
     app.get('/posts/recent', async (req, res) => {

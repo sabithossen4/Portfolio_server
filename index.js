@@ -50,13 +50,14 @@ async function run() {
       res.send(result);
     });    
 
-    
+    // Featured Posts
+    app.get('/posts/featured', async (req, res) => {
+      const featuredPosts = await postsCollection.find({ featured: true }).limit(4).toArray();
+      res.send(featuredPosts);
+    });
 
     // Recent Posts
-    app.get('/posts/recent', async (req, res) => {
-      const recentPosts = await postsCollection.find().sort({ createdAt: -1 }).limit(4).toArray();
-      res.send(recentPosts);
-    });
+    
 
     // Trending Posts
     app.get('/posts/trending', async (req, res) => {

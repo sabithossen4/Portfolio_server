@@ -98,17 +98,18 @@ app.patch('/posts/:id/vote', async (req, res) => {
 });
 
        // Save Comment
-    
+    app.post('/posts/:id/comments', async (req, res) => {
+      const { id } = req.params;
+      const comment = req.body.comment;
+      const result = await postsCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $push: { comments: comment } }
+      );
+      res.send(result);
+    });
 
     // Get Comments
-    app.get('/posts/:id/comments', async (req, res) => {
-      const { id } = req.params;
-      const post = await postsCollection.findOne(
-        { _id: new ObjectId(id) },
-        { projection: { comments: 1 } }
-      );
-      res.send(post?.comments || []);
-    });
+    
 
         // Posts with Pagination & Sorting
 app.get('/posts', async (req, res) => {

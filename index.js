@@ -33,17 +33,15 @@ async function run() {
 
 
 
-   
+    // Create a New Post
+    app.post('/posts', async (req, res) => {
+  const post = req.body;
+  const result = await postsCollection.insertOne({ ...post, createdAt: new Date() });
+  res.send(result);
+});
   
 
-    // Search by Tag
-    app.get('/posts/search', async (req, res) => {
-      const tag = req.query.tag;
-      if (!tag) return res.status(400).json({ error: 'Tag is required' });
-      const searchRegex = new RegExp(tag, 'i');
-      const result = await postsCollection.find({ tags: { $in: [searchRegex] } }).toArray();
-      res.send(result);
-    });    
+      
 
     // Featured Posts
     app.get('/posts/featured', async (req, res) => {

@@ -109,41 +109,17 @@ app.patch('/posts/:id/vote', async (req, res) => {
     });
 
     // Get Comments
-    
+    app.get('/posts/:id/comments', async (req, res) => {
+      const { id } = req.params;
+      const post = await postsCollection.findOne(
+        { _id: new ObjectId(id) },
+        { projection: { comments: 1 } }
+      );
+      res.send(post?.comments || []);
+    });
 
         // Posts with Pagination & Sorting
-app.get('/posts', async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const sort = req.query.sort || 'newest';
-    const limit = 6;
-    const skip = (page - 1) * limit;
-    const totalCount = await postsCollection.countDocuments();
-    let posts;
-    if (sort === 'popularity') {
-      posts = await postsCollection.aggregate([
-        {
-          $addFields: {
-            voteDifference: { $subtract: ["$upVote", "$downVote"] }
-          }
-        },
-        { $sort: { voteDifference: -1 } },
-        { $skip: skip },
-        { $limit: limit }
-      ]).toArray();
-    } else {
-      posts = await postsCollection.find({})
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .toArray();
-    }
-    res.send({ posts, totalCount });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ error: "Failed to fetch posts" });
-  }
-});
+
 
 
  // Get a single post by ID

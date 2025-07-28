@@ -57,7 +57,10 @@ async function run() {
     });
 
     // Recent Posts
-    
+    app.get('/posts/recent', async (req, res) => {
+      const recentPosts = await postsCollection.find().sort({ createdAt: -1 }).limit(4).toArray();
+      res.send(recentPosts);
+    });
 
     // Trending Posts
     app.get('/posts/trending', async (req, res) => {
@@ -74,25 +77,7 @@ async function run() {
     });   
 
 // Vote System
-app.patch('/posts/:id/vote', async (req, res) => {
-  const { likeChange, dislikeChange } = req.body;
-  const { id } = req.params;
-  const query = { _id: new ObjectId(id) };  
-  const post = await postsCollection.findOne(query);
-  if (!post) return res.status(404).send({ message: 'Post not found' });  
-  const updatedLikes = (post.upVote || 0) + (likeChange || 0);
-  const updatedDislikes = (post.downVote || 0) + (dislikeChange || 0);  
-  const result = await postsCollection.updateOne(
-    query, 
-    { 
-      $set: { 
-        upVote: updatedLikes,
-        downVote: updatedDislikes 
-      } 
-    }
-  );  
-  res.send(result);
-});
+
 
        // Save Comment
     app.post('/posts/:id/comments', async (req, res) => {

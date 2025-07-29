@@ -641,7 +641,7 @@ app.get('/admin/reports', async (req, res) => {
       }
     });
 
-    // Protected route example
+    // Protected route example...........
     app.get('/profile', async (req, res) => {
       try {
         const token = req.headers.authorization?.split(' ')[1];

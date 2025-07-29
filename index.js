@@ -38,8 +38,7 @@ async function run() {
   const post = req.body;
   const result = await postsCollection.insertOne({ ...post, createdAt: new Date() });
   res.send(result);
-});
-  
+});  
 
     // Search by Tag
     app.get('/posts/search', async (req, res) => {
@@ -222,13 +221,19 @@ app.get('/users/leaderboard', async (req, res) => {
   res.send(users);
 });
 
-    //  Admin Check Route
-    app.get('/users/admin/:email', async (req, res) => {
-      const email = req.params.email;
-      const user = await usersCollection.findOne({ email });
-      const isAdmin = user?.role === 'admin';
-      res.send({ isAdmin });
-    });
+    // ✅ Admin check route
+app.get('/users/admin/:email', async (req, res) => {
+  try {
+    const email = req.params.email;
+    const query = { email: email };
+    const user = await usersCollection.findOne(query);
+    const isAdmin = user?.role === 'admin';
+    res.send({ admin: isAdmin });
+  } catch (error) {
+    res.status(500).send({ error: 'Internal Server Error' });
+  }
+});
+
 
     app.patch('/users/admin/:id', async (req, res) => {
   const id = req.params.id;

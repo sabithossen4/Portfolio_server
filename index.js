@@ -40,6 +40,47 @@ async function run() {
   res.send(result);
 });  
 
+        // Posts with Pagination & Sorting
+app.get('/posts', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const sort = req.query.sort || 'newest';
+    const limit = 6;
+    const skip = (page - 1) * limit;
+    const totalCount = await postsCollection.countDocuments();
+    let posts;
+    if (sort === 'popularity') {
+      posts = await postsCollection.aggregate([
+        {
+          $addFields: {
+            voteDifference: { $subtract: ["$upVote", "$downVote"] }
+          }
+        },
+        { $sort: { voteDifference: -1 } },
+        { $skip: skip },
+        { $limit: limit }
+      ]).toArray();
+    } else {
+      posts = await postsCollection.find({})
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+    }
+    res.send({ posts, totalCount });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ error: "Failed to fetch posts" });
+  }
+});
+
+ // Get a single post by ID
+app.get('/posts/:id', async (req, res) => {
+  const id = req.params.id;
+  const result = await postsCollection.findOne({ _id: new ObjectId(id) });
+  res.send(result);
+});
+
     // Search by Tag
     app.get('/posts/search', async (req, res) => {
       const tag = req.query.tag;
@@ -117,47 +158,7 @@ app.patch('/posts/:id/vote', async (req, res) => {
       res.send(post?.comments || []);
     });
 
-        // Posts with Pagination & Sorting
-app.get('/posts', async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const sort = req.query.sort || 'newest';
-    const limit = 6;
-    const skip = (page - 1) * limit;
-    const totalCount = await postsCollection.countDocuments();
-    let posts;
-    if (sort === 'popularity') {
-      posts = await postsCollection.aggregate([
-        {
-          $addFields: {
-            voteDifference: { $subtract: ["$upVote", "$downVote"] }
-          }
-        },
-        { $sort: { voteDifference: -1 } },
-        { $skip: skip },
-        { $limit: limit }
-      ]).toArray();
-    } else {
-      posts = await postsCollection.find({})
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .toArray();
-    }
-    res.send({ posts, totalCount });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ error: "Failed to fetch posts" });
-  }
-});
 
-
- // Get a single post by ID
-app.get('/posts/:id', async (req, res) => {
-  const id = req.params.id;
-  const result = await postsCollection.findOne({ _id: new ObjectId(id) });
-  res.send(result);
-});
 
 // 📌 Get posts sorted by most liked (Popular Posts)
 app.get('/posts/popular', async (req, res) => {

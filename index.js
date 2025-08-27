@@ -958,45 +958,31 @@ app.post('/admin/announcements', verifyAdmin, async (req, res) => {
   }
 });
 
+// GET admin stats
 app.get('/admin/stats', verifyAdmin, async (req, res) => {
   try {
-    // Get counts for posts, comments, and users
+    const adminEmail = req.user.email;
+
     const totalPosts = await postsCollection.countDocuments();
     const totalComments = await commentsCollection.countDocuments();
     const totalUsers = await usersCollection.countDocuments();
-    
-    // Get admin profile data
-    const admin = await usersCollection.findOne(
-      { _id: new ObjectId(req.user._id) },
-      { projection: { name: 1, email: 1, photoURL: 1, role: 1 } }
-    );
-    
-    // Get all tags
-    const tags = await tagsCollection.find().toArray();
-    
-    res.status(200).json({
+
+    const admin = await adminsCollection.findOne({ email: adminEmail }) || req.user;
+
+    res.send({
       success: true,
       data: {
         admin,
         stats: {
           totalPosts,
           totalComments,
-          totalUsers,
-          chartData: [
-            { name: 'Posts', value: totalPosts },
-            { name: 'Comments', value: totalComments },
-            { name: 'Users', value: totalUsers }
-          ]
-        },
-        tags
+          totalUsers
+        }
       }
     });
   } catch (error) {
     console.error('Error fetching admin stats:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch admin dashboard statistics' 
-    });
+    res.status(500).send({ success: false, message: 'Failed to fetch admin stats' });
   }
 });
 
@@ -1046,19 +1032,14 @@ app.post('/admin/tags', verifyAdmin, async (req, res) => {
 });
 
 
+// GET all tags
 app.get('/admin/tags', verifyAdmin, async (req, res) => {
   try {
-    const tags = await tagsCollection.find().sort({ name: 1 }).toArray();
-    res.status(200).json({
-      success: true,
-      tags
-    });
+    const tags = await tagsCollection.find().toArray();
+    res.send({ success: true, tags });
   } catch (error) {
     console.error('Error fetching tags:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to fetch tags' 
-    });
+    res.status(500).send({ success: false, message: 'Failed to fetch tags' });
   }
 });
 
@@ -1103,23 +1084,6 @@ app.delete('/admin/tags/:id', verifyAdmin, async (req, res) => {
     });
   }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

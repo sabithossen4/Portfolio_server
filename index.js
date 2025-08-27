@@ -40,7 +40,7 @@ async function run() {
   res.send(result);
 });  
 
-        // Posts with Pagination & Sorting
+ // Posts with Pagination & Sorting
 app.get('/posts', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -49,6 +49,7 @@ app.get('/posts', async (req, res) => {
     const skip = (page - 1) * limit;
     const totalCount = await postsCollection.countDocuments();
     let posts;
+
     if (sort === 'popularity') {
       posts = await postsCollection.aggregate([
         {
@@ -60,19 +61,33 @@ app.get('/posts', async (req, res) => {
         { $skip: skip },
         { $limit: limit }
       ]).toArray();
+    } else if (sort === 'titleAsc') {
+      posts = await postsCollection.find({})
+        .sort({ title: 1 })  // A → Z
+        .skip(skip)
+        .limit(limit)
+        .toArray();
+    } else if (sort === 'titleDesc') {
+      posts = await postsCollection.find({})
+        .sort({ title: -1 }) // Z → A
+        .skip(skip)
+        .limit(limit)
+        .toArray();
     } else {
       posts = await postsCollection.find({})
-        .sort({ createdAt: -1 })
+        .sort({ createdAt: -1 }) // newest first
         .skip(skip)
         .limit(limit)
         .toArray();
     }
+
     res.send({ posts, totalCount });
   } catch (err) {
     console.error(err);
     res.status(500).send({ error: "Failed to fetch posts" });
   }
 });
+
 
  // Get a single post by ID
 app.get('/posts/:id', async (req, res) => {
